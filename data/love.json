@@ -1,0 +1,24 @@
+[
+  {
+    "id": "rjyve8mj01v3",
+    "type": "screenshot",
+    "caption": "love from cal!",
+    "media": "/images/love/love-rjyve8mj01v3-1778016472839.png",
+    "location": "Kolkata",
+    "featured": true,
+    "archived": false,
+    "order": 0,
+    "createdAt": "2026-05-05T21:28:39.890Z"
+  },
+  {
+    "id": "43uslgj25a0v",
+    "type": "screenshot",
+    "caption": "<3",
+    "media": "/images/love/love-43uslgj25a0v-1778016562844.png",
+    "location": "bombae",
+    "featured": false,
+    "archived": false,
+    "order": 1,
+    "createdAt": "2026-05-05T21:29:44.367Z"
+  }
+]

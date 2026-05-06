@@ -1,0 +1,32 @@
+import { NextResponse } from "next/server";
+import { getLovePosts, logAudit, upsertLovePost } from "@/lib/db";
+import { syncToStorefront } from "@/lib/sync";
+import { makeId } from "@/lib/utils";
+import type { LovePost } from "@/lib/types";
+
+export async function GET() {
+  return NextResponse.json(getLovePosts());
+}
+
+export async function POST(req: Request) {
+  const body = (await req.json()) as Partial<LovePost>;
+  const list = getLovePosts();
+  const post: LovePost = {
+    id: body.id ?? makeId(),
+    type: body.type ?? "photo",
+    caption: body.caption ?? "",
+    media: body.media,
+    customerName: body.customerName,
+    location: body.location,
+    productSlug: body.productSlug,
+    rating: body.rating,
+    featured: body.featured ?? false,
+    archived: body.archived ?? false,
+    order: body.order ?? list.length,
+    createdAt: new Date().toISOString(),
+  };
+  await upsertLovePost(post);
+  await syncToStorefront();
+  await logAudit({ action: "create", entity: "love", entityId: post.id });
+  return NextResponse.json(post, { status: 201 });
+}

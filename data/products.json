@@ -1,0 +1,416 @@
+[
+  {
+    "slug": "jutt-tote",
+    "name": "Onai hue",
+    "price": 8500,
+    "story": "Our signature crochet tote — soft, structured, and unapologetically pink.",
+    "description": "The Jutt Tote is hand-crocheted in Punjab using soft cotton yarn and an iron-cast handle frame. Roomy enough for a 13'' laptop, structured enough for evenings out. Each piece takes about 72 hours to complete.",
+    "craft": "Hand-crocheted in Punjab",
+    "collection": "summer",
+    "colors": [
+      {
+        "id": "blush",
+        "name": "Blush Pink",
+        "hex": "#f6a3b8",
+        "inStock": true,
+        "stockCount": 6,
+        "lowStockAt": 2,
+        "image": "/images/products/jutt-tote-blush-pink-1778008634119.png"
+      },
+      {
+        "id": "cream",
+        "name": "Cream",
+        "hex": "#f4ece1",
+        "inStock": true,
+        "stockCount": 4,
+        "lowStockAt": 2
+      },
+      {
+        "id": "lavender",
+        "name": "Lavender",
+        "hex": "#c4a5e6",
+        "inStock": true,
+        "stockCount": 3,
+        "lowStockAt": 2
+      },
+      {
+        "id": "olive",
+        "name": "Olive",
+        "hex": "#8b8c4f",
+        "inStock": true,
+        "stockCount": 2,
+        "lowStockAt": 2
+      }
+    ],
+    "images": [],
+    "featured": true,
+    "archived": false,
+    "createdAt": "2026-05-05T00:00:00.000Z",
+    "updatedAt": "2026-05-06T05:20:29.388Z",
+    "mrp": 12000
+  },
+  {
+    "slug": "maroon-mini",
+    "name": "Onai beach pls",
+    "price": 5400,
+    "story": "A compact crossbody made for wedding-season twirls.",
+    "description": "The Maroon Mini is a compact crossbody bag with a brass closure and adjustable strap. Hand-crocheted in Lucknow with a structured liner — fits a phone, lipstick, and folded essentials.",
+    "craft": "Hand-crocheted in Lucknow",
+    "collection": "wedding",
+    "colors": [
+      {
+        "id": "maroon",
+        "name": "Heritage Maroon",
+        "hex": "#7a1c2e",
+        "inStock": true,
+        "stockCount": 8,
+        "lowStockAt": 2,
+        "image": "/images/products/maroon-mini-heritage-maroon-1778010069768.png"
+      },
+      {
+        "id": "noir",
+        "name": "Noir",
+        "hex": "#1a0a14",
+        "inStock": true,
+        "stockCount": 5,
+        "lowStockAt": 2
+      },
+      {
+        "id": "tan",
+        "name": "Camel Tan",
+        "hex": "#b88f5e",
+        "inStock": true,
+        "stockCount": 4,
+        "lowStockAt": 2
+      },
+      {
+        "id": "ruby",
+        "name": "Ruby",
+        "hex": "#9c2348",
+        "inStock": true,
+        "stockCount": 3,
+        "lowStockAt": 2
+      }
+    ],
+    "images": [],
+    "featured": true,
+    "archived": false,
+    "createdAt": "2026-05-05T00:00:00.000Z",
+    "updatedAt": "2026-05-06T05:20:44.971Z",
+    "mrp": 7500
+  },
+  {
+    "slug": "marigold-hobo",
+    "name": "Marigold Hobo",
+    "price": 6200,
+    "story": "Slouchy, sun-soaked, and built to swing.",
+    "description": "The Marigold Hobo is a slouchy shoulder bag finished with a hand-stitched braided strap. Generous enough for daily essentials plus a paperback. Yarn naturally relaxes after a few weeks of use.",
+    "craft": "Hand-crocheted in Jaipur",
+    "collection": "everyday",
+    "colors": [
+      {
+        "id": "marigold",
+        "name": "Marigold",
+        "hex": "#f2c94c",
+        "inStock": true,
+        "stockCount": 2,
+        "lowStockAt": 2,
+        "image": "/images/products/marigold-hobo-marigold-1778009836774.png"
+      },
+      {
+        "id": "saffron",
+        "name": "Saffron",
+        "hex": "#ec8b2b",
+        "inStock": false,
+        "stockCount": 0,
+        "lowStockAt": 2
+      },
+      {
+        "id": "cream",
+        "name": "Cream",
+        "hex": "#f4ece1",
+        "inStock": false,
+        "stockCount": 0,
+        "lowStockAt": 2
+      },
+      {
+        "id": "pistachio",
+        "name": "Pistachio",
+        "hex": "#a8c98a",
+        "inStock": false,
+        "stockCount": 0,
+        "lowStockAt": 2
+      }
+    ],
+    "images": [],
+    "featured": false,
+    "archived": false,
+    "createdAt": "2026-05-05T00:00:00.000Z",
+    "updatedAt": "2026-05-06T05:21:03.020Z",
+    "mrp": 9000
+  },
+  {
+    "slug": "saffron-sling",
+    "name": "Saffron Sling",
+    "price": 4800,
+    "story": "Boxy, bright, festival-ready.",
+    "description": "A boxy sling with a contrast wooden bead pull. Sized for chai-runs and concert nights. Hand-crocheted with cotton-blend yarn and lined with cotton canvas.",
+    "craft": "Hand-crocheted in Jaipur",
+    "collection": "summer",
+    "colors": [
+      {
+        "id": "saffron",
+        "name": "Saffron",
+        "hex": "#ec8b2b",
+        "inStock": true,
+        "stockCount": 6,
+        "lowStockAt": 2
+      },
+      {
+        "id": "blush",
+        "name": "Blush Pink",
+        "hex": "#f6a3b8",
+        "inStock": true,
+        "stockCount": 4,
+        "lowStockAt": 2
+      },
+      {
+        "id": "lavender",
+        "name": "Lavender",
+        "hex": "#c4a5e6",
+        "inStock": true,
+        "stockCount": 3,
+        "lowStockAt": 2
+      }
+    ],
+    "images": [],
+    "featured": false,
+    "archived": false,
+    "createdAt": "2026-05-05T00:00:00.000Z",
+    "updatedAt": "2026-05-06T05:22:06.005Z",
+    "mrp": 6900
+  },
+  {
+    "slug": "cream-cloud",
+    "name": "Cream Cloud",
+    "price": 7200,
+    "story": "Oversized, airy, the only bag you'll need on weekends.",
+    "description": "The Cream Cloud is an oversized open tote crocheted in airy cotton boucle. Slips a yoga mat through the handles. Comes with a removable inner pouch.",
+    "craft": "Hand-crocheted in Kolkata",
+    "collection": "everyday",
+    "colors": [
+      {
+        "id": "cream",
+        "name": "Cream",
+        "hex": "#f4ece1",
+        "inStock": true,
+        "stockCount": 5,
+        "lowStockAt": 2
+      },
+      {
+        "id": "mint",
+        "name": "Mint",
+        "hex": "#a8e6cf",
+        "inStock": true,
+        "stockCount": 4,
+        "lowStockAt": 2
+      },
+      {
+        "id": "peach",
+        "name": "Peach Sorbet",
+        "hex": "#ffd9b0",
+        "inStock": true,
+        "stockCount": 3,
+        "lowStockAt": 2
+      }
+    ],
+    "images": [],
+    "featured": false,
+    "archived": false,
+    "createdAt": "2026-05-05T00:00:00.000Z",
+    "updatedAt": "2026-05-06T05:22:17.054Z",
+    "mrp": 9999
+  },
+  {
+    "slug": "cinnamon-sling",
+    "name": "Cinnamon Sling",
+    "price": 5900,
+    "story": "Cylindrical, retro, pure compliment-fishing.",
+    "description": "A cylindrical body bag with a magnetic closure. Hand-crocheted in twisted yarn for a textural finish. Strap is detachable so it doubles as a clutch.",
+    "craft": "Hand-crocheted in Kutch",
+    "collection": "limited",
+    "colors": [
+      {
+        "id": "cinnamon",
+        "name": "Cinnamon",
+        "hex": "#c47a4a",
+        "inStock": true,
+        "stockCount": 3,
+        "lowStockAt": 2
+      },
+      {
+        "id": "mocha",
+        "name": "Mocha",
+        "hex": "#7a3e1d",
+        "inStock": true,
+        "stockCount": 4,
+        "lowStockAt": 2
+      },
+      {
+        "id": "olive",
+        "name": "Olive",
+        "hex": "#8b8c4f",
+        "inStock": true,
+        "stockCount": 2,
+        "lowStockAt": 2
+      },
+      {
+        "id": "noir",
+        "name": "Noir",
+        "hex": "#1a0a14",
+        "inStock": true,
+        "stockCount": 5,
+        "lowStockAt": 2
+      }
+    ],
+    "images": [],
+    "featured": false,
+    "archived": false,
+    "createdAt": "2026-05-05T00:00:00.000Z",
+    "updatedAt": "2026-05-06T05:22:30.920Z",
+    "mrp": 7500
+  },
+  {
+    "slug": "rose-bouquet",
+    "name": "Rose Bouquet",
+    "price": 4500,
+    "story": "Round, romantic, dripping with petals.",
+    "description": "A round shoulder bag detailed with crocheted floral appliqués. Lined and zippered. Petals tighten over time — wear them in.",
+    "craft": "Hand-crocheted in Lucknow",
+    "collection": "wedding",
+    "colors": [
+      {
+        "id": "rose",
+        "name": "Rose",
+        "hex": "#ee9eb6",
+        "inStock": true,
+        "stockCount": 5,
+        "lowStockAt": 2,
+        "image": "/images/products/rose-bouquet-rose-1778009520859.png"
+      },
+      {
+        "id": "coral",
+        "name": "Coral",
+        "hex": "#ff8a73",
+        "inStock": true,
+        "stockCount": 4,
+        "lowStockAt": 2
+      },
+      {
+        "id": "lilac",
+        "name": "Lilac",
+        "hex": "#d2bfe8",
+        "inStock": true,
+        "stockCount": 3,
+        "lowStockAt": 2
+      }
+    ],
+    "images": [],
+    "featured": false,
+    "archived": false,
+    "createdAt": "2026-05-05T00:00:00.000Z",
+    "updatedAt": "2026-05-06T05:22:50.784Z",
+    "mrp": 6750
+  },
+  {
+    "slug": "mini-loop",
+    "name": "Onai Pocket",
+    "price": 3200,
+    "story": "Tiny circular handle bag — your phone, lipstick, and that's it.",
+    "description": "Mini Loop is a compact circular bag with a single rigid handle. Hand-crocheted, lined, and unfussy. Carries a phone (up to 6.7''), card holder, and a balm.",
+    "craft": "Hand-crocheted in Bangalore",
+    "collection": "summer",
+    "colors": [
+      {
+        "id": "sunshine",
+        "name": "Sunshine",
+        "hex": "#ffd84d",
+        "inStock": true,
+        "stockCount": 8,
+        "lowStockAt": 3,
+        "image": "/images/products/mini-loop-bubblegum-pink-1778009602577.png"
+      },
+      {
+        "id": "orange",
+        "name": "Tangerine",
+        "hex": "#ffa45c",
+        "inStock": true,
+        "stockCount": 6,
+        "lowStockAt": 3
+      },
+      {
+        "id": "pinky",
+        "name": "pinky",
+        "hex": "#ff4df9",
+        "inStock": true,
+        "stockCount": 5,
+        "lowStockAt": 3
+      }
+    ],
+    "images": [],
+    "featured": true,
+    "archived": false,
+    "createdAt": "2026-05-05T00:00:00.000Z",
+    "updatedAt": "2026-05-06T05:23:02.810Z",
+    "mrp": 4500
+  },
+  {
+    "slug": "sundowner-bucket",
+    "name": "Sundowner Bucket",
+    "price": 6800,
+    "story": "A bucket bag for sea breeze and salty hair.",
+    "description": "A drawstring bucket bag, hand-crocheted with a tonal stripe. Generous capacity, soft slouch, lined with cotton.",
+    "craft": "Hand-crocheted in Goa",
+    "collection": "summer",
+    "colors": [
+      {
+        "id": "tangerine",
+        "name": "Tangerine",
+        "hex": "#ffa45c",
+        "inStock": true,
+        "stockCount": 4,
+        "lowStockAt": 2
+      },
+      {
+        "id": "blush",
+        "name": "Blush Pink",
+        "hex": "#f6a3b8",
+        "inStock": true,
+        "stockCount": 3,
+        "lowStockAt": 2
+      },
+      {
+        "id": "sky",
+        "name": "Sky",
+        "hex": "#9fd4e6",
+        "inStock": true,
+        "stockCount": 3,
+        "lowStockAt": 2
+      },
+      {
+        "id": "white",
+        "name": "White",
+        "hex": "#fafafa",
+        "inStock": false,
+        "stockCount": 0,
+        "lowStockAt": 2
+      }
+    ],
+    "images": [],
+    "featured": false,
+    "archived": false,
+    "createdAt": "2026-05-05T00:00:00.000Z",
+    "updatedAt": "2026-05-06T05:23:15.413Z",
+    "mrp": 7499
+  }
+]
