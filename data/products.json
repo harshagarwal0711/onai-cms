@@ -56,7 +56,7 @@
     "story": "A compact crossbody made for wedding-season twirls.",
     "description": "The Maroon Mini is a compact crossbody bag with a brass closure and adjustable strap. Hand-crocheted in Lucknow with a structured liner — fits a phone, lipstick, and folded essentials.",
     "craft": "Hand-crocheted in Lucknow",
-    "collection": "wedding",
+    "collection": "summer",
     "colors": [
       {
         "id": "maroon",
@@ -96,7 +96,7 @@
     "featured": true,
     "archived": false,
     "createdAt": "2026-05-05T00:00:00.000Z",
-    "updatedAt": "2026-05-06T05:20:44.971Z",
+    "updatedAt": "2026-05-06T17:33:04.050Z",
     "mrp": 7500
   },
   {
@@ -287,7 +287,7 @@
     "story": "Round, romantic, dripping with petals.",
     "description": "A round shoulder bag detailed with crocheted floral appliqués. Lined and zippered. Petals tighten over time — wear them in.",
     "craft": "Hand-crocheted in Lucknow",
-    "collection": "wedding",
+    "collection": "limited",
     "colors": [
       {
         "id": "rose",
@@ -319,7 +319,7 @@
     "featured": false,
     "archived": false,
     "createdAt": "2026-05-05T00:00:00.000Z",
-    "updatedAt": "2026-05-06T05:22:50.784Z",
+    "updatedAt": "2026-05-06T17:33:21.729Z",
     "mrp": 6750
   },
   {
