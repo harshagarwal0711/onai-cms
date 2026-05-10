@@ -369,8 +369,8 @@ export async function setFeatured(f: Featured): Promise<void> {
 
 const DEFAULT_SETTINGS: Settings = {
   whatsappNumber: "919564732995",
-  supportEmail: "hello@onai.in",
-  instagramHandle: "onai.craft",
+  supportEmail: "oonaistudio@gmail.com",
+  instagramHandle: "onai.collective",
   shippingFee: 150,
   freeShippingAbove: 8000,
   orderIdPrefix: "ONAI",
