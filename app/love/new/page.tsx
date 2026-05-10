@@ -6,15 +6,15 @@ import type { LovePost } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
-export default function NewLovePage() {
-  const products = getProducts();
+export default async function NewLovePage() {
+  const [products, posts] = await Promise.all([getProducts(), getLovePosts()]);
   const blank: LovePost = {
     id: makeId(),
     type: "photo",
     caption: "",
     featured: false,
     archived: false,
-    order: getLovePosts().length,
+    order: posts.length,
     createdAt: new Date().toISOString(),
   };
   return (

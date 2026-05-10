@@ -7,9 +7,8 @@ export const dynamic = "force-dynamic";
 
 export default async function EditLovePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const post = getLovePost(id);
+  const [post, products] = await Promise.all([getLovePost(id), getProducts()]);
   if (!post) notFound();
-  const products = getProducts();
   return (
     <div>
       <nav className="mb-2 text-xs text-muted">

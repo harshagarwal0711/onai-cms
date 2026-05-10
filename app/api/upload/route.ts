@@ -1,32 +1,38 @@
 import { NextResponse } from "next/server";
-import fs from "fs";
-import fsp from "fs/promises";
 import path from "path";
-import {
-  CMS_UPLOADS,
-  STOREFRONT_ARTISAN_PHOTOS,
-  STOREFRONT_IMAGES,
-  STOREFRONT_LOVE_IMAGES,
-  STOREFRONT_VIDEOS,
-} from "@/lib/paths";
+import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { slugify } from "@/lib/utils";
 
 /**
- * Multipart upload handler.
+ * Multipart upload handler. Saves to Supabase Storage and returns the public URL.
  *
  *   POST /api/upload?kind=product-image&prefix=jutt-tote-blush
  *   POST /api/upload?kind=artisan-photo&prefix=meena-rajput
+ *   POST /api/upload?kind=love-photo&prefix=customer-shot
  *   POST /api/upload?kind=video&prefix=reel-jutt
  *
- * The file is saved into the CRM's public folder (so admin previews work) AND
- * into the storefront's public folder (so it's served by next/image / <video>
- * at the same path). The returned `url` is the path you store in JSON.
+ * Auth is enforced upstream by middleware. The returned `url` is what you
+ * store in JSON / DB.
  */
+
+const BUCKET = "uploads";
+
+const SUBDIR: Record<string, string> = {
+  "product-image": "products",
+  "artisan-photo": "artisans",
+  "love-photo": "love",
+  video: "videos",
+};
 
 export async function POST(req: Request) {
   const url = new URL(req.url);
   const kind = url.searchParams.get("kind") ?? "product-image";
   const prefix = url.searchParams.get("prefix") ?? "asset";
+
+  const subdir = SUBDIR[kind];
+  if (!subdir) {
+    return NextResponse.json({ error: `Unknown kind: ${kind}` }, { status: 400 });
+  }
 
   const form = await req.formData();
   const file = form.get("file");
@@ -34,60 +40,30 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "No file provided" }, { status: 400 });
   }
 
-  // Decide destinations based on kind.
-  let cmsSubdir: string;
-  let storefrontDir: string;
-  let publicPath: string;
-
-  switch (kind) {
-    case "product-image": {
-      cmsSubdir = "products";
-      storefrontDir = STOREFRONT_IMAGES;
-      publicPath = "/images/products";
-      break;
-    }
-    case "artisan-photo": {
-      cmsSubdir = "artisans";
-      storefrontDir = STOREFRONT_ARTISAN_PHOTOS;
-      publicPath = "/images/artisans";
-      break;
-    }
-    case "love-photo": {
-      cmsSubdir = "love";
-      storefrontDir = STOREFRONT_LOVE_IMAGES;
-      publicPath = "/images/love";
-      break;
-    }
-    case "video": {
-      cmsSubdir = "videos";
-      storefrontDir = STOREFRONT_VIDEOS;
-      publicPath = "/videos";
-      break;
-    }
-    default:
-      return NextResponse.json({ error: `Unknown kind: ${kind}` }, { status: 400 });
-  }
-
-  // Filename: <prefix>-<timestamp>.<ext>
   const orig = file.name || "upload.bin";
   const ext = path.extname(orig).toLowerCase() || guessExt(file.type);
-  const safe = `${slugify(prefix)}-${Date.now()}${ext}`;
-
-  const cmsTarget = path.join(CMS_UPLOADS, cmsSubdir, safe);
-  const storefrontTarget = path.join(storefrontDir, safe);
+  const filename = `${slugify(prefix)}-${Date.now()}${ext}`;
+  const objectPath = `${subdir}/${filename}`;
 
   const buf = Buffer.from(await file.arrayBuffer());
-  await fsp.mkdir(path.dirname(cmsTarget), { recursive: true });
-  await fsp.writeFile(cmsTarget, buf);
 
-  // Mirror into the storefront's public folder (skip if the storefront isn't there).
-  if (fs.existsSync(path.dirname(storefrontDir))) {
-    await fsp.mkdir(storefrontDir, { recursive: true });
-    await fsp.writeFile(storefrontTarget, buf);
+  const supabase = getSupabaseAdmin();
+  const { error } = await supabase.storage
+    .from(BUCKET)
+    .upload(objectPath, buf, {
+      contentType: file.type || "application/octet-stream",
+      upsert: false,
+    });
+
+  if (error) {
+    console.error("[upload] supabase error:", error);
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
+  const { data } = supabase.storage.from(BUCKET).getPublicUrl(objectPath);
+
   return NextResponse.json({
-    url: `${publicPath}/${safe}`,
+    url: data.publicUrl,
     bytes: buf.byteLength,
     type: file.type,
   });

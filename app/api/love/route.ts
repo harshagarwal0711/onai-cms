@@ -1,16 +1,15 @@
 import { NextResponse } from "next/server";
 import { getLovePosts, logAudit, upsertLovePost } from "@/lib/db";
-import { syncToStorefront } from "@/lib/sync";
 import { makeId } from "@/lib/utils";
 import type { LovePost } from "@/lib/types";
 
 export async function GET() {
-  return NextResponse.json(getLovePosts());
+  return NextResponse.json(await getLovePosts());
 }
 
 export async function POST(req: Request) {
   const body = (await req.json()) as Partial<LovePost>;
-  const list = getLovePosts();
+  const list = await getLovePosts();
   const post: LovePost = {
     id: body.id ?? makeId(),
     type: body.type ?? "photo",
@@ -26,7 +25,6 @@ export async function POST(req: Request) {
     createdAt: new Date().toISOString(),
   };
   await upsertLovePost(post);
-  await syncToStorefront();
   await logAudit({ action: "create", entity: "love", entityId: post.id });
   return NextResponse.json(post, { status: 201 });
 }

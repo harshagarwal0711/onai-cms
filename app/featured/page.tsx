@@ -3,9 +3,10 @@ import { getFeatured, getProducts } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
-export default function FeaturedPage() {
-  const products = getProducts().filter((p) => !p.archived);
-  const { orbitSlugs } = getFeatured();
+export default async function FeaturedPage() {
+  const [allProducts, featured] = await Promise.all([getProducts(), getFeatured()]);
+  const products = allProducts.filter((p) => !p.archived);
+  const { orbitSlugs } = featured;
 
   return (
     <div>

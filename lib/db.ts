@@ -1,19 +1,9 @@
 import "server-only";
-import fs from "fs";
-import fsp from "fs/promises";
-import path from "path";
-import {
-  FILE_ARTISANS,
-  FILE_AUDIT,
-  FILE_FEATURED,
-  FILE_LOVE,
-  FILE_PRODUCTS,
-  FILE_REELS,
-  FILE_SETTINGS,
-} from "./paths";
+import { getSupabaseServer } from "./supabase/server";
 import type {
   Artisan,
   AuditEntry,
+  Collection,
   Featured,
   LovePost,
   Product,
@@ -22,128 +12,357 @@ import type {
 } from "./types";
 
 /**
- * Tiny JSON-file "database". Single user (you), single machine.
- * Reads are cached in-process; writes go through atomic temp-file rename.
+ * Supabase-backed data layer. Every function is async — Server Components
+ * and Route Handlers `await` them.
  *
- * Production swap-out: replace these with calls to Supabase / Postgres.
+ * RLS lets anon read the public tables, so storefront fetches still work.
+ * All writes require a Supabase session (enforced by middleware + RLS).
  */
 
-function readJson<T>(file: string, fallback: T): T {
-  try {
-    if (!fs.existsSync(file)) return fallback;
-    const raw = fs.readFileSync(file, "utf8");
-    if (!raw.trim()) return fallback;
-    return JSON.parse(raw) as T;
-  } catch (e) {
-    console.error(`[db] failed to read ${file}:`, e);
-    return fallback;
-  }
+/* ---------- Row <-> domain mapping ---------- */
+
+type ProductRow = {
+  slug: string;
+  name: string;
+  price: number;
+  mrp: number | null;
+  story: string;
+  description: string;
+  craft: string;
+  collection: string;
+  colors: Product["colors"];
+  images: string[];
+  artisan_id: string | null;
+  featured: boolean;
+  archived: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
+function rowToProduct(r: ProductRow): Product {
+  return {
+    slug: r.slug,
+    name: r.name,
+    price: r.price,
+    mrp: r.mrp ?? undefined,
+    story: r.story,
+    description: r.description,
+    craft: r.craft,
+    collection: r.collection as Collection,
+    colors: r.colors ?? [],
+    images: r.images ?? [],
+    artisanId: r.artisan_id ?? undefined,
+    featured: r.featured,
+    archived: r.archived,
+    createdAt: r.created_at,
+    updatedAt: r.updated_at,
+  };
 }
 
-async function writeJson<T>(file: string, value: T): Promise<void> {
-  await fsp.mkdir(path.dirname(file), { recursive: true });
-  const tmp = file + ".tmp";
-  await fsp.writeFile(tmp, JSON.stringify(value, null, 2), "utf8");
-  await fsp.rename(tmp, file);
+function productToRow(p: Product): ProductRow {
+  return {
+    slug: p.slug,
+    name: p.name,
+    price: p.price,
+    mrp: p.mrp ?? null,
+    story: p.story,
+    description: p.description,
+    craft: p.craft,
+    collection: p.collection,
+    colors: p.colors,
+    images: p.images,
+    artisan_id: p.artisanId ?? null,
+    featured: p.featured,
+    archived: p.archived,
+    created_at: p.createdAt,
+    updated_at: p.updatedAt,
+  };
+}
+
+type ArtisanRow = {
+  id: string;
+  name: string;
+  bio: string;
+  location: string;
+  photo: string | null;
+  craft_years: number | null;
+  created_at: string;
+};
+
+function rowToArtisan(r: ArtisanRow): Artisan {
+  return {
+    id: r.id,
+    name: r.name,
+    bio: r.bio,
+    location: r.location,
+    photo: r.photo ?? undefined,
+    craftYears: r.craft_years ?? undefined,
+    createdAt: r.created_at,
+  };
+}
+
+function artisanToRow(a: Artisan): ArtisanRow {
+  return {
+    id: a.id,
+    name: a.name,
+    bio: a.bio,
+    location: a.location,
+    photo: a.photo ?? null,
+    craft_years: a.craftYears ?? null,
+    created_at: a.createdAt,
+  };
+}
+
+type ReelRow = {
+  id: string;
+  title: string;
+  caption: string;
+  handle: string;
+  hashtag: string | null;
+  product_slug: string | null;
+  bag_color: string | null;
+  scene: string;
+  video: string | null;
+  likes: string;
+  comments: string;
+  bg: string;
+  order: number;
+  archived: boolean;
+  created_at: string;
+};
+
+function rowToReel(r: ReelRow): Reel {
+  return {
+    id: r.id,
+    title: r.title,
+    caption: r.caption,
+    handle: r.handle,
+    hashtag: r.hashtag ?? undefined,
+    productSlug: r.product_slug ?? undefined,
+    bagColor: r.bag_color ?? undefined,
+    scene: r.scene as Reel["scene"],
+    video: r.video ?? undefined,
+    likes: r.likes,
+    comments: r.comments,
+    bg: r.bg,
+    order: r.order,
+    archived: r.archived,
+    createdAt: r.created_at,
+  };
+}
+
+function reelToRow(r: Reel): ReelRow {
+  return {
+    id: r.id,
+    title: r.title,
+    caption: r.caption,
+    handle: r.handle,
+    hashtag: r.hashtag ?? null,
+    product_slug: r.productSlug ?? null,
+    bag_color: r.bagColor ?? null,
+    scene: r.scene,
+    video: r.video ?? null,
+    likes: r.likes,
+    comments: r.comments,
+    bg: r.bg,
+    order: r.order,
+    archived: r.archived,
+    created_at: r.createdAt,
+  };
+}
+
+type LoveRow = {
+  id: string;
+  type: string;
+  caption: string;
+  media: string | null;
+  customer_name: string | null;
+  location: string | null;
+  product_slug: string | null;
+  rating: number | null;
+  featured: boolean;
+  archived: boolean;
+  order: number;
+  created_at: string;
+};
+
+function rowToLove(r: LoveRow): LovePost {
+  return {
+    id: r.id,
+    type: r.type as LovePost["type"],
+    caption: r.caption,
+    media: r.media ?? undefined,
+    customerName: r.customer_name ?? undefined,
+    location: r.location ?? undefined,
+    productSlug: r.product_slug ?? undefined,
+    rating: r.rating ?? undefined,
+    featured: r.featured,
+    archived: r.archived,
+    order: r.order,
+    createdAt: r.created_at,
+  };
+}
+
+function loveToRow(l: LovePost): LoveRow {
+  return {
+    id: l.id,
+    type: l.type,
+    caption: l.caption,
+    media: l.media ?? null,
+    customer_name: l.customerName ?? null,
+    location: l.location ?? null,
+    product_slug: l.productSlug ?? null,
+    rating: l.rating ?? null,
+    featured: l.featured,
+    archived: l.archived,
+    order: l.order,
+    created_at: l.createdAt,
+  };
 }
 
 /* ---------- Products ---------- */
 
-export function getProducts(): Product[] {
-  return readJson<Product[]>(FILE_PRODUCTS, []);
+export async function getProducts(): Promise<Product[]> {
+  const sb = await getSupabaseServer();
+  const { data, error } = await sb.from("products").select("*").order("created_at", { ascending: true });
+  if (error) {
+    console.error("[db] getProducts:", error);
+    return [];
+  }
+  return (data as ProductRow[]).map(rowToProduct);
 }
-export function getProduct(slug: string): Product | undefined {
-  return getProducts().find((p) => p.slug === slug);
+
+export async function getProduct(slug: string): Promise<Product | undefined> {
+  const sb = await getSupabaseServer();
+  const { data, error } = await sb.from("products").select("*").eq("slug", slug).maybeSingle();
+  if (error || !data) return undefined;
+  return rowToProduct(data as ProductRow);
 }
-export async function setProducts(list: Product[]): Promise<void> {
-  await writeJson(FILE_PRODUCTS, list);
-}
+
 export async function upsertProduct(p: Product): Promise<void> {
-  const list = getProducts();
-  const idx = list.findIndex((x) => x.slug === p.slug);
-  if (idx === -1) list.push(p);
-  else list[idx] = p;
-  await setProducts(list);
+  const sb = await getSupabaseServer();
+  const { error } = await sb.from("products").upsert(productToRow(p), { onConflict: "slug" });
+  if (error) throw new Error(`upsertProduct: ${error.message}`);
 }
+
 export async function deleteProduct(slug: string): Promise<void> {
-  await setProducts(getProducts().filter((p) => p.slug !== slug));
+  const sb = await getSupabaseServer();
+  const { error } = await sb.from("products").delete().eq("slug", slug);
+  if (error) throw new Error(`deleteProduct: ${error.message}`);
 }
 
 /* ---------- Artisans ---------- */
 
-export function getArtisans(): Artisan[] {
-  return readJson<Artisan[]>(FILE_ARTISANS, []);
+export async function getArtisans(): Promise<Artisan[]> {
+  const sb = await getSupabaseServer();
+  const { data, error } = await sb.from("artisans").select("*").order("created_at", { ascending: true });
+  if (error) {
+    console.error("[db] getArtisans:", error);
+    return [];
+  }
+  return (data as ArtisanRow[]).map(rowToArtisan);
 }
-export function getArtisan(id: string): Artisan | undefined {
-  return getArtisans().find((a) => a.id === id);
+
+export async function getArtisan(id: string): Promise<Artisan | undefined> {
+  const sb = await getSupabaseServer();
+  const { data, error } = await sb.from("artisans").select("*").eq("id", id).maybeSingle();
+  if (error || !data) return undefined;
+  return rowToArtisan(data as ArtisanRow);
 }
-export async function setArtisans(list: Artisan[]): Promise<void> {
-  await writeJson(FILE_ARTISANS, list);
-}
+
 export async function upsertArtisan(a: Artisan): Promise<void> {
-  const list = getArtisans();
-  const idx = list.findIndex((x) => x.id === a.id);
-  if (idx === -1) list.push(a);
-  else list[idx] = a;
-  await setArtisans(list);
+  const sb = await getSupabaseServer();
+  const { error } = await sb.from("artisans").upsert(artisanToRow(a), { onConflict: "id" });
+  if (error) throw new Error(`upsertArtisan: ${error.message}`);
 }
+
 export async function deleteArtisan(id: string): Promise<void> {
-  await setArtisans(getArtisans().filter((a) => a.id !== id));
+  const sb = await getSupabaseServer();
+  const { error } = await sb.from("artisans").delete().eq("id", id);
+  if (error) throw new Error(`deleteArtisan: ${error.message}`);
 }
 
 /* ---------- Reels ---------- */
 
-export function getReels(): Reel[] {
-  return readJson<Reel[]>(FILE_REELS, []).sort((a, b) => a.order - b.order);
+export async function getReels(): Promise<Reel[]> {
+  const sb = await getSupabaseServer();
+  const { data, error } = await sb.from("reels").select("*").order("order", { ascending: true });
+  if (error) {
+    console.error("[db] getReels:", error);
+    return [];
+  }
+  return (data as ReelRow[]).map(rowToReel);
 }
-export function getReel(id: string): Reel | undefined {
-  return getReels().find((r) => r.id === id);
+
+export async function getReel(id: string): Promise<Reel | undefined> {
+  const sb = await getSupabaseServer();
+  const { data, error } = await sb.from("reels").select("*").eq("id", id).maybeSingle();
+  if (error || !data) return undefined;
+  return rowToReel(data as ReelRow);
 }
-export async function setReels(list: Reel[]): Promise<void> {
-  await writeJson(FILE_REELS, list);
-}
+
 export async function upsertReel(r: Reel): Promise<void> {
-  const list = getReels();
-  const idx = list.findIndex((x) => x.id === r.id);
-  if (idx === -1) list.push(r);
-  else list[idx] = r;
-  await setReels(list);
+  const sb = await getSupabaseServer();
+  const { error } = await sb.from("reels").upsert(reelToRow(r), { onConflict: "id" });
+  if (error) throw new Error(`upsertReel: ${error.message}`);
 }
+
 export async function deleteReel(id: string): Promise<void> {
-  await setReels(getReels().filter((r) => r.id !== id));
+  const sb = await getSupabaseServer();
+  const { error } = await sb.from("reels").delete().eq("id", id);
+  if (error) throw new Error(`deleteReel: ${error.message}`);
 }
 
 /* ---------- Love posts ---------- */
 
-export function getLovePosts(): LovePost[] {
-  return readJson<LovePost[]>(FILE_LOVE, []).sort((a, b) => a.order - b.order);
+export async function getLovePosts(): Promise<LovePost[]> {
+  const sb = await getSupabaseServer();
+  const { data, error } = await sb.from("love_posts").select("*").order("order", { ascending: true });
+  if (error) {
+    console.error("[db] getLovePosts:", error);
+    return [];
+  }
+  return (data as LoveRow[]).map(rowToLove);
 }
-export function getLovePost(id: string): LovePost | undefined {
-  return getLovePosts().find((l) => l.id === id);
+
+export async function getLovePost(id: string): Promise<LovePost | undefined> {
+  const sb = await getSupabaseServer();
+  const { data, error } = await sb.from("love_posts").select("*").eq("id", id).maybeSingle();
+  if (error || !data) return undefined;
+  return rowToLove(data as LoveRow);
 }
-export async function setLovePosts(list: LovePost[]): Promise<void> {
-  await writeJson(FILE_LOVE, list);
-}
+
 export async function upsertLovePost(l: LovePost): Promise<void> {
-  const list = getLovePosts();
-  const idx = list.findIndex((x) => x.id === l.id);
-  if (idx === -1) list.push(l);
-  else list[idx] = l;
-  await setLovePosts(list);
+  const sb = await getSupabaseServer();
+  const { error } = await sb.from("love_posts").upsert(loveToRow(l), { onConflict: "id" });
+  if (error) throw new Error(`upsertLovePost: ${error.message}`);
 }
+
 export async function deleteLovePost(id: string): Promise<void> {
-  await setLovePosts(getLovePosts().filter((l) => l.id !== id));
+  const sb = await getSupabaseServer();
+  const { error } = await sb.from("love_posts").delete().eq("id", id);
+  if (error) throw new Error(`deleteLovePost: ${error.message}`);
 }
 
 /* ---------- Featured (orbit) ---------- */
 
-const DEFAULT_FEATURED: Featured = { orbitSlugs: [] };
-
-export function getFeatured(): Featured {
-  return readJson<Featured>(FILE_FEATURED, DEFAULT_FEATURED);
+export async function getFeatured(): Promise<Featured> {
+  const sb = await getSupabaseServer();
+  const { data, error } = await sb
+    .from("featured")
+    .select("orbit_slugs")
+    .eq("key", "default")
+    .maybeSingle();
+  if (error || !data) return { orbitSlugs: [] };
+  return { orbitSlugs: ((data as { orbit_slugs: string[] }).orbit_slugs ?? []) };
 }
+
 export async function setFeatured(f: Featured): Promise<void> {
-  await writeJson(FILE_FEATURED, f);
+  const sb = await getSupabaseServer();
+  const { error } = await sb
+    .from("featured")
+    .upsert({ key: "default", orbit_slugs: f.orbitSlugs }, { onConflict: "key" });
+  if (error) throw new Error(`setFeatured: ${error.message}`);
 }
 
 /* ---------- Settings ---------- */
@@ -157,20 +376,75 @@ const DEFAULT_SETTINGS: Settings = {
   orderIdPrefix: "ONAI",
 };
 
-export function getSettings(): Settings {
-  return { ...DEFAULT_SETTINGS, ...readJson<Partial<Settings>>(FILE_SETTINGS, {}) };
+type SettingsRow = {
+  whatsapp_number: string;
+  support_email: string;
+  instagram_handle: string;
+  shipping_fee: number;
+  free_shipping_above: number;
+  order_id_prefix: string;
+};
+
+export async function getSettings(): Promise<Settings> {
+  const sb = await getSupabaseServer();
+  const { data, error } = await sb
+    .from("settings")
+    .select("*")
+    .eq("key", "default")
+    .maybeSingle();
+  if (error || !data) return { ...DEFAULT_SETTINGS };
+  const r = data as SettingsRow;
+  return {
+    whatsappNumber: r.whatsapp_number,
+    supportEmail: r.support_email,
+    instagramHandle: r.instagram_handle,
+    shippingFee: r.shipping_fee,
+    freeShippingAbove: r.free_shipping_above,
+    orderIdPrefix: r.order_id_prefix,
+  };
 }
+
 export async function setSettings(s: Settings): Promise<void> {
-  await writeJson(FILE_SETTINGS, s);
+  const sb = await getSupabaseServer();
+  const { error } = await sb.from("settings").upsert(
+    {
+      key: "default",
+      whatsapp_number: s.whatsappNumber,
+      support_email: s.supportEmail,
+      instagram_handle: s.instagramHandle,
+      shipping_fee: s.shippingFee,
+      free_shipping_above: s.freeShippingAbove,
+      order_id_prefix: s.orderIdPrefix,
+    },
+    { onConflict: "key" },
+  );
+  if (error) throw new Error(`setSettings: ${error.message}`);
 }
 
 /* ---------- Audit log ---------- */
 
-export function getAudit(): AuditEntry[] {
-  return readJson<AuditEntry[]>(FILE_AUDIT, []).slice(0, 100);
+export async function getAudit(): Promise<AuditEntry[]> {
+  const sb = await getSupabaseServer();
+  const { data, error } = await sb
+    .from("audit_log")
+    .select("ts, action, entity, entity_id")
+    .order("ts", { ascending: false })
+    .limit(100);
+  if (error || !data) return [];
+  return (data as { ts: string; action: string; entity: string; entity_id: string }[]).map((r) => ({
+    ts: r.ts,
+    action: r.action,
+    entity: r.entity,
+    entityId: r.entity_id,
+  }));
 }
+
 export async function logAudit(entry: Omit<AuditEntry, "ts">): Promise<void> {
-  const log = getAudit();
-  log.unshift({ ts: new Date().toISOString(), ...entry });
-  await writeJson(FILE_AUDIT, log.slice(0, 100));
+  const sb = await getSupabaseServer();
+  const { error } = await sb.from("audit_log").insert({
+    action: entry.action,
+    entity: entry.entity,
+    entity_id: entry.entityId,
+  });
+  if (error) console.error("[db] logAudit:", error);
 }

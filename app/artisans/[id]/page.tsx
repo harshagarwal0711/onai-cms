@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 
 export default async function EditArtisanPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const a = getArtisan(id);
+  const a = await getArtisan(id);
   if (!a) notFound();
   return (
     <div>

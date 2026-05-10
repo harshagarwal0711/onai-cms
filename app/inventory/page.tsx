@@ -3,8 +3,8 @@ import { getProducts } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
-export default function InventoryPage() {
-  const products = getProducts();
+export default async function InventoryPage() {
+  const products = await getProducts();
 
   // Flatten all colorways into a single inventory list, sorted by lowest stock.
   const rows = products

@@ -1,16 +1,15 @@
 import { NextResponse } from "next/server";
 import { getReels, logAudit, upsertReel } from "@/lib/db";
-import { syncToStorefront } from "@/lib/sync";
 import { makeId } from "@/lib/utils";
 import type { Reel } from "@/lib/types";
 
 export async function GET() {
-  return NextResponse.json(getReels());
+  return NextResponse.json(await getReels());
 }
 
 export async function POST(req: Request) {
   const body = (await req.json()) as Partial<Reel>;
-  const list = getReels();
+  const list = await getReels();
   const reel: Reel = {
     id: body.id ?? makeId(),
     title: body.title ?? "Untitled reel",
@@ -29,7 +28,6 @@ export async function POST(req: Request) {
     createdAt: new Date().toISOString(),
   };
   await upsertReel(reel);
-  await syncToStorefront();
   await logAudit({ action: "create", entity: "reel", entityId: reel.id });
   return NextResponse.json(reel, { status: 201 });
 }

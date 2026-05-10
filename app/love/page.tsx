@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { getLovePosts } from "@/lib/db";
+import { assetUrl } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -10,8 +11,8 @@ const TYPE_LABEL: Record<string, string> = {
   screenshot: "📱 Screenshot",
 };
 
-export default function LoveListPage() {
-  const posts = getLovePosts();
+export default async function LoveListPage() {
+  const posts = await getLovePosts();
   return (
     <div>
       <header className="mb-8 flex flex-wrap items-center justify-between gap-4">
@@ -27,7 +28,7 @@ export default function LoveListPage() {
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
         {posts.map((p) => {
-          const previewSrc = p.media ? `http://localhost:3000${p.media}` : undefined;
+          const previewSrc = assetUrl(p.media);
           const isVideo = p.type === "video";
           return (
             <Link

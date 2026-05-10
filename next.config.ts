@@ -1,11 +1,25 @@
 import type { NextConfig } from "next";
 
+/**
+ * Allow next/image to load uploaded images from Supabase Storage. The hostname
+ * is parsed from NEXT_PUBLIC_SUPABASE_URL so prod and dev share one source of truth.
+ */
+const supabaseHost = (() => {
+  const u = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  if (!u) return undefined;
+  try {
+    return new URL(u).hostname;
+  } catch {
+    return undefined;
+  }
+})();
+
 const config: NextConfig = {
-  // Allow loading the storefront's product photos directly in the admin so
-  // previews show real images even though the file lives in a sibling folder.
   images: {
     remotePatterns: [
-      { protocol: "http", hostname: "localhost", port: "3000" },
+      ...(supabaseHost
+        ? [{ protocol: "https" as const, hostname: supabaseHost, pathname: "/storage/v1/object/public/**" }]
+        : []),
     ],
   },
 };

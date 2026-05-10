@@ -1,11 +1,10 @@
 import { NextResponse } from "next/server";
-import { getProducts, logAudit, upsertProduct } from "@/lib/db";
-import { syncToStorefront } from "@/lib/sync";
+import { getProduct, getProducts, logAudit, upsertProduct } from "@/lib/db";
 import { slugify } from "@/lib/utils";
 import type { Product } from "@/lib/types";
 
 export async function GET() {
-  return NextResponse.json(getProducts());
+  return NextResponse.json(await getProducts());
 }
 
 export async function POST(req: Request) {
@@ -16,7 +15,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Name required" }, { status: 400 });
   }
   const slug = body.slug ? slugify(body.slug) : slugify(body.name);
-  if (getProducts().some((p) => p.slug === slug)) {
+  if (await getProduct(slug)) {
     return NextResponse.json({ error: `Slug "${slug}" already exists` }, { status: 409 });
   }
 
@@ -38,7 +37,6 @@ export async function POST(req: Request) {
   };
 
   await upsertProduct(product);
-  await syncToStorefront();
   await logAudit({ action: "create", entity: "product", entityId: slug });
   return NextResponse.json(product, { status: 201 });
 }

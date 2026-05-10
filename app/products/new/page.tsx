@@ -5,8 +5,8 @@ import type { Product } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
-export default function NewProductPage() {
-  const artisans = getArtisans();
+export default async function NewProductPage() {
+  const artisans = await getArtisans();
 
   const blank: Product = {
     slug: "",

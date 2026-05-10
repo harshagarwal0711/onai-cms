@@ -17,6 +17,7 @@ const NAV = [
 
 export function Shell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  if (pathname === "/login") return <>{children}</>;
   return (
     <div className="flex min-h-screen">
       <aside className="sticky top-0 hidden h-screen w-64 shrink-0 border-r border-black/5 bg-white p-5 md:block">
@@ -58,18 +59,14 @@ export function Shell({ children }: { children: React.ReactNode }) {
           })}
         </nav>
 
-        <div className="mt-10 rounded-xl border border-dashed border-black/10 p-3 text-xs text-muted">
-          <p className="font-semibold text-ink">Linked storefront</p>
-          <p className="mt-1">All saves auto-sync to <code>../onai-next</code>.</p>
-          <a
-            href="http://localhost:3000"
-            target="_blank"
-            rel="noreferrer"
-            className="mt-2 inline-block font-semibold text-brand hover:underline"
+        <form action="/api/auth/logout" method="post" className="mt-10">
+          <button
+            type="submit"
+            className="w-full rounded-xl px-3 py-2 text-left text-xs font-semibold text-muted ring-1 ring-black/10 hover:text-ink hover:ring-black/20"
           >
-            Open storefront →
-          </a>
-        </div>
+            Sign out
+          </button>
+        </form>
       </aside>
 
       <main className="min-w-0 flex-1 px-5 py-8 md:px-10">{children}</main>

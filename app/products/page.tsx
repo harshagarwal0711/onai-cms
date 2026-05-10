@@ -4,9 +4,8 @@ import { formatPrice } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
-export default function ProductsPage() {
-  const products = getProducts();
-  const artisans = getArtisans();
+export default async function ProductsPage() {
+  const [products, artisans] = await Promise.all([getProducts(), getArtisans()]);
 
   return (
     <div>

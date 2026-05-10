@@ -7,9 +7,8 @@ export const dynamic = "force-dynamic";
 
 export default async function EditReelPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const reel = getReel(id);
+  const [reel, products] = await Promise.all([getReel(id), getProducts()]);
   if (!reel) notFound();
-  const products = getProducts();
   return (
     <div>
       <nav className="mb-2 text-xs text-muted">

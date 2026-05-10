@@ -288,9 +288,9 @@ export function ProductForm({
               Delete
             </button>
           )}
-          {mode === "edit" && draft.slug && (
+          {mode === "edit" && draft.slug && process.env.NEXT_PUBLIC_STOREFRONT_URL && (
             <a
-              href={`http://localhost:3000/products/${draft.slug}`}
+              href={`${process.env.NEXT_PUBLIC_STOREFRONT_URL.replace(/\/$/, "")}/products/${draft.slug}`}
               target="_blank"
               rel="noreferrer"
               className="btn-ghost"

@@ -6,8 +6,8 @@ import type { Reel } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
-export default function NewReelPage() {
-  const products = getProducts();
+export default async function NewReelPage() {
+  const [products, reels] = await Promise.all([getProducts(), getReels()]);
   const blank: Reel = {
     id: makeId(),
     title: "",
@@ -17,7 +17,7 @@ export default function NewReelPage() {
     likes: "0",
     comments: "0",
     bg: "linear-gradient(160deg, #ffd1dc 0%, #ff6b9d 100%)",
-    order: getReels().length,
+    order: reels.length,
     archived: false,
     createdAt: new Date().toISOString(),
   };

@@ -1,11 +1,10 @@
 import { NextResponse } from "next/server";
 import { getArtisans, logAudit, upsertArtisan } from "@/lib/db";
-import { syncToStorefront } from "@/lib/sync";
 import { makeId } from "@/lib/utils";
 import type { Artisan } from "@/lib/types";
 
 export async function GET() {
-  return NextResponse.json(getArtisans());
+  return NextResponse.json(await getArtisans());
 }
 
 export async function POST(req: Request) {
@@ -21,7 +20,6 @@ export async function POST(req: Request) {
     createdAt: new Date().toISOString(),
   };
   await upsertArtisan(artisan);
-  await syncToStorefront();
   await logAudit({ action: "create", entity: "artisan", entityId: artisan.id });
   return NextResponse.json(artisan, { status: 201 });
 }

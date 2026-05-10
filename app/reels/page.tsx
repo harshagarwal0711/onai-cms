@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { getReels } from "@/lib/db";
+import { assetUrl } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
-export default function ReelsPage() {
-  const reels = getReels();
+export default async function ReelsPage() {
+  const reels = await getReels();
   return (
     <div>
       <header className="mb-8 flex flex-wrap items-center justify-between gap-4">
@@ -17,7 +18,7 @@ export default function ReelsPage() {
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
         {reels.map((r) => {
-          const previewSrc = r.video ? `http://localhost:3000${r.video}` : undefined;
+          const previewSrc = assetUrl(r.video);
           return (
             <Link
               key={r.id}

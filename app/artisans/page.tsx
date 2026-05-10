@@ -1,11 +1,11 @@
 import Link from "next/link";
 import { getArtisans, getProducts } from "@/lib/db";
+import { assetUrl } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
-export default function ArtisansPage() {
-  const artisans = getArtisans();
-  const products = getProducts();
+export default async function ArtisansPage() {
+  const [artisans, products] = await Promise.all([getArtisans(), getProducts()]);
   return (
     <div>
       <header className="mb-8 flex flex-wrap items-center justify-between gap-4">
@@ -19,7 +19,7 @@ export default function ArtisansPage() {
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
         {artisans.map((a) => {
           const linked = products.filter((p) => p.artisanId === a.id);
-          const photoSrc = a.photo ? `http://localhost:3000${a.photo}` : undefined;
+          const photoSrc = assetUrl(a.photo);
           return (
             <Link
               key={a.id}

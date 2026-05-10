@@ -1,12 +1,12 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { cn } from "@/lib/utils";
+import { assetUrl, cn } from "@/lib/utils";
 
 /**
  * Compact upload widget. Shows a thumb of the current file (if any) and a
- * "Replace" button. Uploaded image URL (path on the storefront's public dir)
- * is reported via `onChange`.
+ * "Replace" button. Uploaded URL (Supabase Storage public URL) is reported
+ * via `onChange`.
  */
 export function ImageUploader({
   value,
@@ -18,7 +18,7 @@ export function ImageUploader({
 }: {
   value?: string;
   onChange: (url: string) => void;
-  kind?: "product-image" | "artisan-photo" | "video";
+  kind?: "product-image" | "artisan-photo" | "love-photo" | "video";
   prefix?: string;
   shape?: "square" | "portrait" | "video";
   className?: string;
@@ -51,12 +51,7 @@ export function ImageUploader({
     }
   }
 
-  // The storefront serves uploads at localhost:3000. Resolve preview URL.
-  const previewSrc = value
-    ? value.startsWith("http")
-      ? value
-      : `http://localhost:3000${value}`
-    : undefined;
+  const previewSrc = assetUrl(value);
 
   return (
     <div className={cn("flex flex-col gap-2", className)}>

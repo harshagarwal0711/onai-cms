@@ -1,18 +1,17 @@
 import { NextResponse } from "next/server";
 import { deleteProduct, getProduct, logAudit, upsertProduct } from "@/lib/db";
-import { syncToStorefront } from "@/lib/sync";
 import type { Product } from "@/lib/types";
 
 export async function GET(_req: Request, { params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const product = getProduct(slug);
+  const product = await getProduct(slug);
   if (!product) return NextResponse.json({ error: "Not found" }, { status: 404 });
   return NextResponse.json(product);
 }
 
 export async function PUT(req: Request, { params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const existing = getProduct(slug);
+  const existing = await getProduct(slug);
   if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   const body = (await req.json()) as Partial<Product>;
@@ -23,7 +22,6 @@ export async function PUT(req: Request, { params }: { params: Promise<{ slug: st
     updatedAt: new Date().toISOString(),
   };
   await upsertProduct(updated);
-  await syncToStorefront();
   await logAudit({ action: "update", entity: "product", entityId: slug });
   return NextResponse.json(updated);
 }
@@ -31,7 +29,6 @@ export async function PUT(req: Request, { params }: { params: Promise<{ slug: st
 export async function DELETE(_req: Request, { params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   await deleteProduct(slug);
-  await syncToStorefront();
   await logAudit({ action: "delete", entity: "product", entityId: slug });
   return NextResponse.json({ ok: true });
 }
