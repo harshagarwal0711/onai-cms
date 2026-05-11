@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 
 const NAV = [
@@ -80,81 +80,170 @@ export function Shell({ children }: { children: React.ReactNode }) {
 
 /* ---------- Publish button ---------- */
 
+const STOREFRONT_URL = "https://onaicollective.in";
+const POLL_EVERY_MS = 10_000;
+const POLL_MAX_MS = 8 * 60 * 1000; // give up after 8 min
+
+type PublishState =
+  | { kind: "idle" }
+  | { kind: "triggering" }
+  | { kind: "building"; baselineUnixMs: number; startedAt: number; nowMs: number }
+  | { kind: "live"; secondsTaken: number }
+  | { kind: "debounced" }
+  | { kind: "timeout" }
+  | { kind: "err"; msg: string };
+
+async function fetchStorefrontVersion(): Promise<number | null> {
+  try {
+    const res = await fetch(`${STOREFRONT_URL}/api/version?t=${Date.now()}`, { cache: "no-store" });
+    if (!res.ok) return null;
+    const j = await res.json();
+    return typeof j.unixMs === "number" ? j.unixMs : null;
+  } catch {
+    return null;
+  }
+}
+
 function PublishButton() {
-  type State =
-    | { kind: "idle" }
-    | { kind: "busy" }
-    | { kind: "ok"; msg: string }
-    | { kind: "err"; msg: string };
-  const [state, setState] = useState<State>({ kind: "idle" });
+  const [state, setState] = useState<PublishState>({ kind: "idle" });
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const tickRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  function stopTimers() {
+    if (pollRef.current) clearInterval(pollRef.current);
+    if (tickRef.current) clearInterval(tickRef.current);
+    pollRef.current = null;
+    tickRef.current = null;
+  }
+
+  useEffect(() => () => stopTimers(), []);
 
   async function publish() {
-    setState({ kind: "busy" });
+    stopTimers();
+    setState({ kind: "triggering" });
+
+    // Snapshot the storefront's current version BEFORE firing the rebuild.
+    // The poll later watches for this value to change.
+    const baseline = (await fetchStorefrontVersion()) ?? 0;
+
+    let json: { ok: boolean; debounced?: boolean; reason?: string; status?: number };
     try {
       const res = await fetch("/api/publish", { method: "POST" });
-      const json = await res.json();
-      if (json.ok) {
-        setState({
-          kind: "ok",
-          msg: json.debounced
-            ? "Just published — try again in 15 s."
-            : "Storefront rebuilding · live in ~3–5 min",
-        });
-      } else if (json.reason === "no-url") {
-        setState({
-          kind: "err",
-          msg: "Deploy hook not configured. Add RENDER_DEPLOY_HOOK_URL on Render.",
-        });
-      } else {
-        setState({
-          kind: "err",
-          msg: `Hook failed (${json.reason}${json.status ? ` ${json.status}` : ""}).`,
-        });
-      }
-      setTimeout(() => setState({ kind: "idle" }), 6000);
+      json = await res.json();
     } catch (e) {
-      setState({
-        kind: "err",
-        msg: e instanceof Error ? e.message : "Request failed",
-      });
+      setState({ kind: "err", msg: e instanceof Error ? e.message : "Request failed" });
+      return;
     }
+
+    if (!json.ok) {
+      const msg =
+        json.reason === "no-url"
+          ? "Deploy hook not configured. Add RENDER_DEPLOY_HOOK_URL on Render."
+          : `Hook failed (${json.reason}${json.status ? ` ${json.status}` : ""}).`;
+      setState({ kind: "err", msg });
+      return;
+    }
+
+    if (json.debounced) {
+      setState({ kind: "debounced" });
+      setTimeout(() => setState({ kind: "idle" }), 6000);
+      return;
+    }
+
+    // Successfully triggered. Now poll the storefront until its unixMs changes.
+    const startedAt = Date.now();
+    setState({ kind: "building", baselineUnixMs: baseline, startedAt, nowMs: startedAt });
+
+    tickRef.current = setInterval(() => {
+      setState((s) => (s.kind === "building" ? { ...s, nowMs: Date.now() } : s));
+    }, 1000);
+
+    pollRef.current = setInterval(async () => {
+      const elapsed = Date.now() - startedAt;
+      if (elapsed > POLL_MAX_MS) {
+        stopTimers();
+        setState({ kind: "timeout" });
+        return;
+      }
+      const live = await fetchStorefrontVersion();
+      if (live !== null && live !== baseline) {
+        stopTimers();
+        setState({ kind: "live", secondsTaken: Math.round(elapsed / 1000) });
+        setTimeout(() => setState({ kind: "idle" }), 10_000);
+      }
+    }, POLL_EVERY_MS);
   }
+
+  const isBusy = state.kind === "triggering" || state.kind === "building";
 
   return (
     <div className="rounded-xl bg-page p-3 ring-1 ring-black/5">
       <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-muted">Linked storefront</p>
       <p className="mt-1 text-[11px] text-muted">
         Push your CMS edits to{" "}
-        <a
-          href="https://onaicollective.in"
-          target="_blank"
-          rel="noreferrer"
-          className="font-semibold text-brand hover:underline"
-        >
+        <a href={STOREFRONT_URL} target="_blank" rel="noreferrer" className="font-semibold text-brand hover:underline">
           onaicollective.in
         </a>
       </p>
       <button
         type="button"
         onClick={publish}
-        disabled={state.kind === "busy"}
+        disabled={isBusy}
         className={cn(
           "mt-3 w-full rounded-lg px-3 py-2 text-xs font-bold transition",
-          state.kind === "busy"
+          isBusy
             ? "bg-black/10 text-ink/50 cursor-wait"
             : "bg-brand text-white hover:bg-brand-soft",
         )}
       >
-        {state.kind === "busy" ? "Publishing…" : "Publish to storefront"}
+        {state.kind === "triggering" && "Triggering rebuild…"}
+        {state.kind === "building" && `Building… ${formatElapsed(state.nowMs - state.startedAt)}`}
+        {!isBusy && "Publish to storefront"}
       </button>
-      {state.kind === "ok" && (
-        <p className="mt-2 text-[10px] font-semibold text-emerald-700">{state.msg}</p>
+
+      {state.kind === "building" && (
+        <p className="mt-2 text-[10px] font-semibold text-amber-700">
+          Render is rebuilding. Usually ~3 min on free tier.
+          <br />
+          <span className="font-normal text-muted">I&apos;ll tell you the second the new build goes live.</span>
+        </p>
+      )}
+      {state.kind === "live" && (
+        <p className="mt-2 text-[10px] font-bold text-emerald-700">
+          ✓ LIVE NOW — new build came online after {state.secondsTaken}s.
+          <br />
+          <a
+            href={`${STOREFRONT_URL}?t=${Date.now()}`}
+            target="_blank"
+            rel="noreferrer"
+            className="font-semibold text-brand underline-offset-2 hover:underline"
+          >
+            Open storefront →
+          </a>
+        </p>
+      )}
+      {state.kind === "debounced" && (
+        <p className="mt-2 text-[10px] font-semibold text-amber-700">
+          Already publishing — wait 15 s between clicks.
+        </p>
+      )}
+      {state.kind === "timeout" && (
+        <p className="mt-2 text-[10px] font-semibold text-amber-700">
+          Build is taking longer than 8 min. Check Render dashboard for errors.
+        </p>
       )}
       {state.kind === "err" && (
         <p className="mt-2 text-[10px] font-semibold text-red-700">{state.msg}</p>
       )}
     </div>
   );
+}
+
+function formatElapsed(ms: number): string {
+  const total = Math.max(0, Math.floor(ms / 1000));
+  const m = Math.floor(total / 60);
+  const s = total % 60;
+  return `${m}:${String(s).padStart(2, "0")}`;
 }
 
 /* ---------- inline icons ---------- */
