@@ -3,6 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
+import { useState } from "react";
 import { cn } from "@/lib/utils";
 
 const NAV = [
@@ -59,17 +60,99 @@ export function Shell({ children }: { children: React.ReactNode }) {
           })}
         </nav>
 
-        <form action="/api/auth/logout" method="post" className="mt-10">
-          <button
-            type="submit"
-            className="w-full rounded-xl px-3 py-2 text-left text-xs font-semibold text-muted ring-1 ring-black/10 hover:text-ink hover:ring-black/20"
-          >
-            Sign out
-          </button>
-        </form>
+        <div className="mt-10 space-y-3">
+          <PublishButton />
+          <form action="/api/auth/logout" method="post">
+            <button
+              type="submit"
+              className="w-full rounded-xl px-3 py-2 text-left text-xs font-semibold text-muted ring-1 ring-black/10 hover:text-ink hover:ring-black/20"
+            >
+              Sign out
+            </button>
+          </form>
+        </div>
       </aside>
 
       <main className="min-w-0 flex-1 px-5 py-8 md:px-10">{children}</main>
+    </div>
+  );
+}
+
+/* ---------- Publish button ---------- */
+
+function PublishButton() {
+  type State =
+    | { kind: "idle" }
+    | { kind: "busy" }
+    | { kind: "ok"; msg: string }
+    | { kind: "err"; msg: string };
+  const [state, setState] = useState<State>({ kind: "idle" });
+
+  async function publish() {
+    setState({ kind: "busy" });
+    try {
+      const res = await fetch("/api/publish", { method: "POST" });
+      const json = await res.json();
+      if (json.ok) {
+        setState({
+          kind: "ok",
+          msg: json.debounced
+            ? "Just published — try again in 15 s."
+            : "Storefront rebuilding · live in ~3–5 min",
+        });
+      } else if (json.reason === "no-url") {
+        setState({
+          kind: "err",
+          msg: "Deploy hook not configured. Add RENDER_DEPLOY_HOOK_URL on Render.",
+        });
+      } else {
+        setState({
+          kind: "err",
+          msg: `Hook failed (${json.reason}${json.status ? ` ${json.status}` : ""}).`,
+        });
+      }
+      setTimeout(() => setState({ kind: "idle" }), 6000);
+    } catch (e) {
+      setState({
+        kind: "err",
+        msg: e instanceof Error ? e.message : "Request failed",
+      });
+    }
+  }
+
+  return (
+    <div className="rounded-xl bg-page p-3 ring-1 ring-black/5">
+      <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-muted">Linked storefront</p>
+      <p className="mt-1 text-[11px] text-muted">
+        Push your CMS edits to{" "}
+        <a
+          href="https://onaicollective.in"
+          target="_blank"
+          rel="noreferrer"
+          className="font-semibold text-brand hover:underline"
+        >
+          onaicollective.in
+        </a>
+      </p>
+      <button
+        type="button"
+        onClick={publish}
+        disabled={state.kind === "busy"}
+        className={cn(
+          "mt-3 w-full rounded-lg px-3 py-2 text-xs font-bold transition",
+          state.kind === "busy"
+            ? "bg-black/10 text-ink/50 cursor-wait"
+            : "bg-brand text-white hover:bg-brand-soft",
+        )}
+      >
+        {state.kind === "busy" ? "Publishing…" : "Publish to storefront"}
+      </button>
+      {state.kind === "ok" && (
+        <p className="mt-2 text-[10px] font-semibold text-emerald-700">{state.msg}</p>
+      )}
+      {state.kind === "err" && (
+        <p className="mt-2 text-[10px] font-semibold text-red-700">{state.msg}</p>
+      )}
     </div>
   );
 }
