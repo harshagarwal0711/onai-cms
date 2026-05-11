@@ -157,10 +157,17 @@ function PublishButton() {
     }
 
     if (!json.ok) {
-      const msg =
-        json.reason === "no-url"
-          ? "Deploy hook not configured. Add RENDER_DEPLOY_HOOK_URL on Render."
-          : `Hook failed (${json.reason}${json.status ? ` ${json.status}` : ""}).`;
+      let msg: string;
+      if (json.reason === "no-url") {
+        msg = "Deploy hook not configured. Add RENDER_DEPLOY_HOOK_URL on Render.";
+      } else if (json.reason === "wrong-service") {
+        msg =
+          "RENDER_DEPLOY_HOOK_URL points at this CMS service, not the storefront. " +
+          "On Render → onai service → Settings → Deploy Hook, copy that URL " +
+          "and paste it as the env var here (replacing the current value).";
+      } else {
+        msg = `Hook failed (${json.reason}${json.status ? ` ${json.status}` : ""}).`;
+      }
       setState({ kind: "err", msg });
       return;
     }

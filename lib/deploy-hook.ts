@@ -11,7 +11,7 @@ const DEBOUNCE_MS = 15_000;
 
 export type DeployHookResult =
   | { ok: true; debounced?: boolean }
-  | { ok: false; reason: "no-url" | "network" | "http"; status?: number; message?: string };
+  | { ok: false; reason: "no-url" | "wrong-service" | "network" | "http"; status?: number; message?: string };
 
 /**
  * Fire-and-forget. Used by mutation API routes that don't want to block their
@@ -28,6 +28,15 @@ export function triggerStorefrontRebuild(): void {
 export async function triggerStorefrontRebuildAndReport(): Promise<DeployHookResult> {
   const url = process.env.RENDER_DEPLOY_HOOK_URL;
   if (!url) return { ok: false, reason: "no-url" };
+
+  // Sanity check: Render injects RENDER_SERVICE_ID with this service's own srv-ID.
+  // If that ID appears inside the deploy hook URL, the user copied the CMS's
+  // own deploy hook by mistake — firing it would just rebuild the CMS (which
+  // doesn't help the storefront at all).
+  const myServiceId = process.env.RENDER_SERVICE_ID;
+  if (myServiceId && url.includes(myServiceId)) {
+    return { ok: false, reason: "wrong-service" };
+  }
 
   const now = Date.now();
   if (now - lastFiredAt < DEBOUNCE_MS) return { ok: true, debounced: true };
