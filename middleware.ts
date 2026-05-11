@@ -42,14 +42,24 @@ export async function middleware(req: NextRequest) {
 
   if (!user) {
     if (pathname.startsWith("/api/")) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      const r = NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      r.headers.set("Cache-Control", "no-store, must-revalidate, private");
+      return r;
     }
     const loginUrl = req.nextUrl.clone();
     loginUrl.pathname = "/login";
     loginUrl.searchParams.set("from", pathname);
-    return NextResponse.redirect(loginUrl);
+    const r = NextResponse.redirect(loginUrl);
+    r.headers.set("Cache-Control", "no-store, must-revalidate, private");
+    return r;
   }
 
+  // Authenticated response: forbid caching + bfcache so pressing "back" after
+  // logout doesn't restore an authenticated-looking page from the browser cache.
+  // Without this, Chrome stores the rendered HTML and re-shows it on history
+  // navigation, bypassing the middleware entirely.
+  response.headers.set("Cache-Control", "no-store, must-revalidate, private");
+  response.headers.set("Pragma", "no-cache");
   return response;
 }
 
