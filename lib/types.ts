@@ -101,6 +101,10 @@ export type Settings = {
   shippingFee: number;
   freeShippingAbove: number;
   orderIdPrefix: string;
+  /** Google Form pre-filled URL for the newsletter signup. Should contain
+   *  `__EMAIL__` as the placeholder for the customer's address. Empty
+   *  string disables submission (form just shows "Subscribed ✓"). */
+  newsletterFormUrl: string;
 };
 
 export type AuditEntry = {

@@ -1,8 +1,9 @@
 {
-  "whatsappNumber": "919564732995",
+  "whatsappNumber": "918617087067",
   "supportEmail": "oonaistudio@gmail.com",
   "instagramHandle": "onai.collective",
   "shippingFee": 99,
   "freeShippingAbove": 1999,
-  "orderIdPrefix": "ONAI"
+  "orderIdPrefix": "ONAI",
+  "newsletterFormUrl": ""
 }

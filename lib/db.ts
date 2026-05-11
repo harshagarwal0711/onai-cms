@@ -368,12 +368,13 @@ export async function setFeatured(f: Featured): Promise<void> {
 /* ---------- Settings ---------- */
 
 const DEFAULT_SETTINGS: Settings = {
-  whatsappNumber: "919564732995",
+  whatsappNumber: "918617087067",
   supportEmail: "oonaistudio@gmail.com",
   instagramHandle: "onai.collective",
   shippingFee: 150,
   freeShippingAbove: 8000,
   orderIdPrefix: "ONAI",
+  newsletterFormUrl: "",
 };
 
 type SettingsRow = {

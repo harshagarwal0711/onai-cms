@@ -96,6 +96,21 @@ export function SettingsForm({ initial }: { initial: Settings }) {
             onChange={(e) => patch({ freeShippingAbove: Math.max(0, Number(e.target.value) || 0) })}
           />
         </div>
+        <div className="md:col-span-2">
+          <label className="label">Newsletter — Google Form pre-filled URL</label>
+          <input
+            type="url"
+            className="input"
+            value={draft.newsletterFormUrl ?? ""}
+            placeholder="https://docs.google.com/forms/d/e/.../viewform?usp=pp_url&entry.123=__EMAIL__"
+            onChange={(e) => patch({ newsletterFormUrl: e.target.value })}
+          />
+          <p className="mt-1 text-[11px] text-muted">
+            Paste the Google Form pre-filled link with <code>__EMAIL__</code> as the email
+            placeholder. Storefront submits there silently and the address lands in the
+            linked Google Sheet. Leave blank to disable submission.
+          </p>
+        </div>
       </div>
 
       <div className="flex items-center justify-end gap-3 border-t border-black/5 pt-4">
