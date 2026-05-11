@@ -106,6 +106,10 @@ async function fetchStorefrontVersion(): Promise<number | null> {
 
 function PublishButton() {
   const [state, setState] = useState<PublishState>({ kind: "idle" });
+  // Storefront's build time (auto-refreshed every 30s) — lets us always show
+  // "Storefront last built: X min ago" without the user clicking anything.
+  const [liveBuildMs, setLiveBuildMs] = useState<number | null>(null);
+  const [, setTick] = useState(0); // forces re-render so the "X min ago" stays fresh
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const tickRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -116,7 +120,24 @@ function PublishButton() {
     tickRef.current = null;
   }
 
-  useEffect(() => () => stopTimers(), []);
+  // Initial fetch + auto-refresh every 30s of storefront's build time.
+  useEffect(() => {
+    let cancelled = false;
+    const refresh = async () => {
+      const v = await fetchStorefrontVersion();
+      if (!cancelled && typeof v === "number") setLiveBuildMs(v);
+    };
+    refresh();
+    const id = setInterval(refresh, 30_000);
+    // Also tick every 30s to keep the "X min ago" label fresh as time passes.
+    const id2 = setInterval(() => setTick((t) => t + 1), 30_000);
+    return () => {
+      cancelled = true;
+      clearInterval(id);
+      clearInterval(id2);
+      stopTimers();
+    };
+  }, []);
 
   async function publish() {
     stopTimers();
@@ -180,11 +201,21 @@ function PublishButton() {
     <div className="rounded-xl bg-page p-3 ring-1 ring-black/5">
       <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-muted">Linked storefront</p>
       <p className="mt-1 text-[11px] text-muted">
-        Push your CMS edits to{" "}
         <a href={STOREFRONT_URL} target="_blank" rel="noreferrer" className="font-semibold text-brand hover:underline">
           onaicollective.in
         </a>
       </p>
+
+      {/* Always-visible build status — auto-refreshes every 30s. */}
+      <p className={cn(
+        "mt-2 text-[10px] font-semibold",
+        ageStaleness(liveBuildMs) === "stale"  ? "text-red-600" :
+        ageStaleness(liveBuildMs) === "warn"   ? "text-amber-700" :
+                                                 "text-emerald-700",
+      )}>
+        ● Storefront last built {liveBuildMs ? formatAge(liveBuildMs) : "—"}
+      </p>
+
       <button
         type="button"
         onClick={publish}
@@ -244,6 +275,26 @@ function formatElapsed(ms: number): string {
   const m = Math.floor(total / 60);
   const s = total % 60;
   return `${m}:${String(s).padStart(2, "0")}`;
+}
+
+function formatAge(buildUnixMs: number): string {
+  const ageMs = Date.now() - buildUnixMs;
+  const sec = Math.floor(ageMs / 1000);
+  if (sec < 60) return "just now";
+  const min = Math.floor(sec / 60);
+  if (min < 60) return `${min} min ago`;
+  const hr = Math.floor(min / 60);
+  if (hr < 24) return `${hr} hr ago`;
+  const days = Math.floor(hr / 24);
+  return `${days} day${days === 1 ? "" : "s"} ago`;
+}
+
+function ageStaleness(buildUnixMs: number | null): "fresh" | "warn" | "stale" {
+  if (!buildUnixMs) return "warn";
+  const ageMin = (Date.now() - buildUnixMs) / 60_000;
+  if (ageMin < 10) return "fresh";
+  if (ageMin < 60) return "warn";
+  return "stale";
 }
 
 /* ---------- inline icons ---------- */
