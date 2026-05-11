@@ -81,8 +81,12 @@ create table if not exists settings (
   instagram_handle text not null default 'onai.craft',
   shipping_fee integer not null default 150,
   free_shipping_above integer not null default 8000,
-  order_id_prefix text not null default 'ONAI'
+  order_id_prefix text not null default 'ONAI',
+  newsletter_form_url text not null default ''
 );
+
+-- For databases created before the newsletter_form_url column was added.
+alter table settings add column if not exists newsletter_form_url text not null default '';
 
 create table if not exists audit_log (
   id bigserial primary key,

@@ -8,7 +8,10 @@
  *
  * Idempotent: every insert is an upsert keyed on the primary key.
  */
-import "dotenv/config";
+import { config as loadEnv } from "dotenv";
+// Next.js convention is .env.local — load that first, then fall back to .env.
+loadEnv({ path: ".env.local" });
+loadEnv();
 import fs from "fs";
 import { createClient } from "@supabase/supabase-js";
 import {

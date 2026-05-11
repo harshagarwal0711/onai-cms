@@ -384,6 +384,8 @@ type SettingsRow = {
   shipping_fee: number;
   free_shipping_above: number;
   order_id_prefix: string;
+  // Nullable in the type to tolerate legacy rows from before the column existed.
+  newsletter_form_url: string | null;
 };
 
 export async function getSettings(): Promise<Settings> {
@@ -402,6 +404,7 @@ export async function getSettings(): Promise<Settings> {
     shippingFee: r.shipping_fee,
     freeShippingAbove: r.free_shipping_above,
     orderIdPrefix: r.order_id_prefix,
+    newsletterFormUrl: r.newsletter_form_url ?? "",
   };
 }
 
@@ -416,6 +419,7 @@ export async function setSettings(s: Settings): Promise<void> {
       shipping_fee: s.shippingFee,
       free_shipping_above: s.freeShippingAbove,
       order_id_prefix: s.orderIdPrefix,
+      newsletter_form_url: s.newsletterFormUrl ?? "",
     },
     { onConflict: "key" },
   );
