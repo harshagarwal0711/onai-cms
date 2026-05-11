@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getReels, logAudit, upsertReel } from "@/lib/db";
+import { triggerStorefrontRebuild } from "@/lib/deploy-hook";
 import { makeId } from "@/lib/utils";
 import type { Reel } from "@/lib/types";
 
@@ -29,5 +30,6 @@ export async function POST(req: Request) {
   };
   await upsertReel(reel);
   await logAudit({ action: "create", entity: "reel", entityId: reel.id });
+  triggerStorefrontRebuild();
   return NextResponse.json(reel, { status: 201 });
 }

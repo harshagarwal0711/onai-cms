@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { deleteLovePost, getLovePost, logAudit, upsertLovePost } from "@/lib/db";
+import { triggerStorefrontRebuild } from "@/lib/deploy-hook";
 import type { LovePost } from "@/lib/types";
 
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -17,6 +18,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
   const updated: LovePost = { ...existing, ...body, id: existing.id };
   await upsertLovePost(updated);
   await logAudit({ action: "update", entity: "love", entityId: id });
+  triggerStorefrontRebuild();
   return NextResponse.json(updated);
 }
 
@@ -24,5 +26,6 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ id: 
   const { id } = await params;
   await deleteLovePost(id);
   await logAudit({ action: "delete", entity: "love", entityId: id });
+  triggerStorefrontRebuild();
   return NextResponse.json({ ok: true });
 }

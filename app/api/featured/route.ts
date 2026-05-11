@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getFeatured, getProducts, logAudit, setFeatured } from "@/lib/db";
+import { triggerStorefrontRebuild } from "@/lib/deploy-hook";
 import type { Featured } from "@/lib/types";
 
 export async function GET() {
@@ -21,5 +22,6 @@ export async function PUT(req: Request) {
   const next: Featured = { orbitSlugs: cleaned.slice(0, 5) };
   await setFeatured(next);
   await logAudit({ action: "update", entity: "featured", entityId: "orbit" });
+  triggerStorefrontRebuild();
   return NextResponse.json(next);
 }

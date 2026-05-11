@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getLovePosts, logAudit, upsertLovePost } from "@/lib/db";
+import { triggerStorefrontRebuild } from "@/lib/deploy-hook";
 import { makeId } from "@/lib/utils";
 import type { LovePost } from "@/lib/types";
 
@@ -26,5 +27,6 @@ export async function POST(req: Request) {
   };
   await upsertLovePost(post);
   await logAudit({ action: "create", entity: "love", entityId: post.id });
+  triggerStorefrontRebuild();
   return NextResponse.json(post, { status: 201 });
 }

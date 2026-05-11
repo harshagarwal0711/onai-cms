@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getArtisans, logAudit, upsertArtisan } from "@/lib/db";
+import { triggerStorefrontRebuild } from "@/lib/deploy-hook";
 import { makeId } from "@/lib/utils";
 import type { Artisan } from "@/lib/types";
 
@@ -21,5 +22,6 @@ export async function POST(req: Request) {
   };
   await upsertArtisan(artisan);
   await logAudit({ action: "create", entity: "artisan", entityId: artisan.id });
+  triggerStorefrontRebuild();
   return NextResponse.json(artisan, { status: 201 });
 }

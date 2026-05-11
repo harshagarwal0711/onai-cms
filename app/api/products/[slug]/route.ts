@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { deleteProduct, getProduct, logAudit, upsertProduct } from "@/lib/db";
+import { triggerStorefrontRebuild } from "@/lib/deploy-hook";
 import type { Product } from "@/lib/types";
 
 export async function GET(_req: Request, { params }: { params: Promise<{ slug: string }> }) {
@@ -23,6 +24,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ slug: st
   };
   await upsertProduct(updated);
   await logAudit({ action: "update", entity: "product", entityId: slug });
+  triggerStorefrontRebuild();
   return NextResponse.json(updated);
 }
 
@@ -30,5 +32,6 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ slug
   const { slug } = await params;
   await deleteProduct(slug);
   await logAudit({ action: "delete", entity: "product", entityId: slug });
+  triggerStorefrontRebuild();
   return NextResponse.json({ ok: true });
 }

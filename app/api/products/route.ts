@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getProduct, getProducts, logAudit, upsertProduct } from "@/lib/db";
+import { triggerStorefrontRebuild } from "@/lib/deploy-hook";
 import { slugify } from "@/lib/utils";
 import type { Product } from "@/lib/types";
 
@@ -38,5 +39,6 @@ export async function POST(req: Request) {
 
   await upsertProduct(product);
   await logAudit({ action: "create", entity: "product", entityId: slug });
+  triggerStorefrontRebuild();
   return NextResponse.json(product, { status: 201 });
 }
